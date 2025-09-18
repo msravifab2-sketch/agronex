@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Page</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase v8 SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Login / Sign Up</h2>
+
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+
+    <button id="loginBtn">Login</button>
+    <button id="signupBtn">Create Account</button>
+
+    <p>──────── OR ────────</p>
+    <button id="googleBtn" class="google">Sign in with Google</button>
+  </div>
+
+  <!-- Script last -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Crop Bot Dashboard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0;
+      color: #222;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #2c5530;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-top: 4px solid #4CAF50;
+    }
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #2c5530;
+    }
+    .stat-label {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+    .bot-controls {
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    .bot-controls h3 {
+      margin-bottom: 15px;
+      color: #2c5530;
+    }
+    .control-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .control-btn {
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      transition: 0.3s;
+    }
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .stop-btn {
+      background: linear-gradient(45deg, #f44336, #d32f2f);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 AI Crop Bot Dashboard</h1>
+      <p id="botStatus">🟢 Bot Online</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value" id="issuesDetected">--</div>
+        <div class="stat-label">Issues Detected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="sprayEfficiency">--%</div>
+        <div class="stat-label">Spray Efficiency</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="batteryLevel">--%</div>
+        <div class="stat-label">Battery Level</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="temperature">--°C</div>
+        <div class="stat-label">Temperature</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="humidity">--%</div>
+        <div class="stat-label">Humidity</div>
+      </div>
+    </div>
+
+    <div class="bot-controls">
+      <h3>🎮 Bot Controls</h3>
+      <div class="control-buttons">
+        <button class="control-btn" onclick="sendCommand('startScan','🔍 Scanning Field...')">🔍 Start Scan</button>
+        <button class="control-btn" onclick="sendCommand('targetedSpray','💨 Targeted Spray Activated')">💨 Target Spray</button>
+        <button class="control-btn" onclick="sendCommand('returnHome','🏠 Returning to Base')">🏠 Return Home</button>
+        <button class="control-btn stop-btn" onclick="sendCommand('emergencyStop','⛔ Emergency Stop!')">⛔ Emergency Stop</button>
+        <button class="control-btn" style="background: linear-gradient(45deg, #FFA500, #FF8C00);" onclick="window.location.href='plantgrid.html'">🌱 Plant Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcSK394fDwwbdbBkh46g_g7aEJKIts1pE",
+      authDomain: "agronex-6d4a4.firebaseapp.com",
+      databaseURL: "https://agronex-6d4a4-default-rtdb.firebaseio.com",
+      projectId: "agronex-6d4a4",
+      storageBucket: "agronex-6d4a4.appspot.com",
+      messagingSenderId: "473974696770",
+      appId: "1:473974696770:web:e0cd6afdf1d483165936db",
+      measurementId: "G-5SDH561ZM9"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        const userRef = db.ref("users/" + user.uid);
+
+        // 🔹 Now reading from deviceData
+        userRef.child("deviceData").on("value", (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            document.getElementById("issuesDetected").textContent = data.issues ?? "--";
+            document.getElementById("sprayEfficiency").textContent = (data.sprayEfficiency ?? "--") + "%";
+            document.getElementById("batteryLevel").textContent = (data.battery ?? "--") + "%";
+            document.getElementById("temperature").textContent = (data.temperature ?? "--") + "°C";
+            document.getElementById("humidity").textContent = (data.humidity ?? "--") + "%";
+          }
+        });
+
+        // 🔹 Optional: also read plantGrid if you use it
+        userRef.child("sensors/plantGrid").on("value", (snapshot) => {
+          const grid = snapshot.val();
+          if(grid){
+            let infectedCount = 0;
+            if(Array.isArray(grid)){
+              infectedCount = grid.filter(v => v === 1).length;
+            } else {
+              infectedCount = Object.values(grid).filter(v => v === 1).length;
+            }
+            document.getElementById("issuesDetected").textContent = infectedCount;
+          }
+        });
+
+        // ✅ Send commands
+        window.sendCommand = function(action, statusMsg) {
+          userRef.child("commands").set({ action: action });
+          document.getElementById("botStatus").innerHTML = statusMsg;
+        };
+
+      } else {
+        window.location.href = "index.html"; // redirect if not logged in
+      }
+    });
+  </script>
+</body>
+</html>

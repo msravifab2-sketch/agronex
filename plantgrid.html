@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plant Health Grid</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 120px);
+      grid-template-rows: repeat(3, 120px);
+      gap: 15px;
+    }
+
+    .plant-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2.5rem;
+      border: 2px solid #4caf50;
+      border-radius: 10px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .plant-box:hover {
+      transform: scale(1.1);
+    }
+
+    .healthy { color: green; }
+    .infected { color: red; }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="grid-container" id="plantGrid">
+    <div class="plant-box" id="box0"></div>
+    <div class="plant-box" id="box1"></div>
+    <div class="plant-box" id="box2"></div>
+    <div class="plant-box" id="box3"></div>
+    <div class="plant-box" id="box4"></div>
+    <div class="plant-box" id="box5"></div>
+    <div class="plant-box" id="box6"></div>
+    <div class="plant-box" id="box7"></div>
+    <div class="plant-box" id="box8"></div>
+  </div>
+
+  <script>
+    // 🔹 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcSK394fDwwbdbBkh46g_g7aEJKIts1pE",
+      authDomain: "agronex-6d4a4.firebaseapp.com",
+      databaseURL: "https://agronex-6d4a4-default-rtdb.firebaseio.com",
+      projectId: "agronex-6d4a4",
+      storageBucket: "agronex-6d4a4.firebasestorage.app",
+      messagingSenderId: "473974696770",
+      appId: "1:473974696770:web:e0cd6afdf1d483165936db",
+      measurementId: "G-5SDH561ZM9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const boxes = [];
+    for(let i=0; i<9; i++) boxes.push(document.getElementById(`box${i}`));
+
+    // 🔹 Only show grid for logged-in user
+    firebase.auth().onAuthStateChanged((user) => {
+      if(user){
+        const userRef = db.ref("users/" + user.uid + "/sensors/plantGrid");
+
+        // Listen to plantGrid in Firebase
+        userRef.on('value', snapshot => {
+          const data = snapshot.val();
+
+          // Clear all boxes first
+          boxes.forEach(box => {
+            box.classList.remove('healthy','infected');
+            box.textContent = '';
+          });
+
+          if(data && data.length === 9){
+            for(let i=0; i<9; i++){
+              const box = boxes[i];
+              if(data[i] === 0){
+                box.classList.add('healthy');
+                box.textContent = '✅';
+              } else {
+                box.classList.add('infected');
+                box.textContent = '❌';
+              }
+            }
+          }
+        });
+      } else {
+        window.location.href = "index.html"; // redirect to login if not signed in
+      }
+    });
+  </script>
+</body>
+</html>
